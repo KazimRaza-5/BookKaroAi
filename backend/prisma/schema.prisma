@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         Role          @default(CUSTOMER)
+  appointments Appointment[]
+  chatSessions ChatSession[]
+  createdAt    DateTime      @default(now())
+}
+
+enum Role {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+model Provider {
+  id           String         @id @default(uuid())
+  name         String
+  bio          String?
+  services     Service[]
+  appointments Appointment[]
+  availability Availability[]
+}
+
+model Service {
+  id           String        @id @default(uuid())
+  name         String
+  durationMin  Int
+  price        Decimal       @db.Decimal(10, 2)
+  providerId   String
+  provider     Provider      @relation(fields: [providerId], references: [id])
+  appointments Appointment[]
+}
+
+model Availability {
+  id         String   @id @default(uuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id])
+  weekday    Int
+  startTime  String
+  endTime    String
+}
+
+model Appointment {
+  id         String            @id @default(uuid())
+  userId     String
+  user       User              @relation(fields: [userId], references: [id])
+  providerId String
+  provider   Provider          @relation(fields: [providerId], references: [id])
+  serviceId  String
+  service    Service           @relation(fields: [serviceId], references: [id])
+  startTime  DateTime
+  endTime    DateTime
+  missedSeen  Boolean           @default(false)
+  status     AppointmentStatus @default(CONFIRMED)
+  createdAt  DateTime          @default(now())
+
+  @@index([providerId, startTime])
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model ChatSession {
+  id             String        @id @default(uuid())
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  pendingBooking Json?
+  messages       ChatMessage[]
+  createdAt      DateTime      @default(now())
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id])
+  role      String
+  content   String
+  createdAt DateTime    @default(now())
+}

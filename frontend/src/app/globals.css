@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+:root {
+  --background: #08070c;
+  --foreground: #f1f1f5;
+}
+
+body {
+  color: var(--foreground);
+  background: transparent; /* AnimatedBackground handles the visual background now */
+  min-height: 100vh;
+}
+
+input,
+textarea,
+select {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #f1f1f5;
+}
+input::placeholder {
+  color: #8a8a95;
+}
+
+/* Frosted glass surface — used for cards, nav, dialogs, bubbles */
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Vibrant shimmering CTA gradient */
+.btn-gradient {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899, #f97316);
+  background-size: 200% 200%;
+  animation: shimmer 5s ease infinite;
+  transition: filter 0.2s ease;
+}
+.btn-gradient:hover {
+  filter: brightness(1.15) saturate(1.25);
+}
+.btn-gradient:disabled {
+  filter: grayscale(0.5) brightness(0.75);
+  animation: none;
+}
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+}
+
+/* react-datepicker — glass themed */
+.react-datepicker {
+  background: rgba(20, 18, 28, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f1f1f5 !important;
+  font-family: inherit !important;
+}
+.react-datepicker__header {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+.react-datepicker__current-month,
+.react-datepicker__day-name,
+.react-datepicker__day {
+  color: #f1f1f5 !important;
+}
+.react-datepicker__day:hover {
+  background: rgba(236, 72, 153, 0.3) !important;
+  border-radius: 6px !important;
+}
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+}
+.react-datepicker__day--disabled {
+  color: #55555f !important;
+}
+.react-datepicker__navigation-icon::before {
+  border-color: #f1f1f5 !important;
+}
+.react-datepicker__triangle {
+  display: none;
+}
