@@ -48,20 +48,22 @@ router.get("/sessions", requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.get("/:sessionId", requireAuth, async (req: AuthRequest, res) => {
-  const session = await prisma.chatSession.findUnique({ where: { id: req.params.sessionId } });
+  const sessionId = req.params.sessionId as string;
+  const session = await prisma.chatSession.findUnique({ where: { id: sessionId } });
   if (!session || session.userId !== req.userId) {
     return res.status(403).json({ error: "Invalid session" });
   }
-  const messages = await getFullHistory(req.params.sessionId);
+  const messages = await getFullHistory(sessionId);
   res.json({ messages, pendingBooking: session.pendingBooking || null });
 });
 
 router.post("/:sessionId/clear-pending", requireAuth, async (req: AuthRequest, res) => {
-  const session = await prisma.chatSession.findUnique({ where: { id: req.params.sessionId } });
+  const sessionId = req.params.sessionId as string;
+  const session = await prisma.chatSession.findUnique({ where: { id: sessionId } });
   if (!session || session.userId !== req.userId) {
     return res.status(403).json({ error: "Invalid session" });
   }
-  await prisma.chatSession.update({ where: { id: req.params.sessionId }, data: { pendingBooking: Prisma.DbNull } });
+  await prisma.chatSession.update({ where: { id: sessionId }, data: { pendingBooking: Prisma.DbNull } });
   res.status(204).send();
 });
 

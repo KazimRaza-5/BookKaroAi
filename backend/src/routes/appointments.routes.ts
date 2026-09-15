@@ -62,7 +62,7 @@ router.post("/notifications/mark-seen", requireAuth, async (req: AuthRequest, re
 
 router.delete("/:id", requireAuth, async (req: AuthRequest, res) => {
   try {
-    await cancelAppointment(req.userId!, req.params.id);
+    await cancelAppointment(req.userId!, req.params.id as string);
     res.status(204).send();
   } catch (e: any) {
     res.status(e.status || 500).json({ error: e.message });
@@ -71,7 +71,7 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res) => {
 
 router.post("/:id/complete", requireAuth, async (req: AuthRequest, res) => {
   try {
-    const appt = await completeAppointment(req.userId!, req.params.id);
+    const appt = await completeAppointment(req.userId!, req.params.id as string);
     res.json(appt);
   } catch (e: any) {
     res.status(e.status || 500).json({ error: e.message });
@@ -80,7 +80,7 @@ router.post("/:id/complete", requireAuth, async (req: AuthRequest, res) => {
 
 router.delete("/:id/permanent", requireAuth, async (req: AuthRequest, res) => {
   try {
-    await deleteAppointmentPermanently(req.userId!, req.params.id);
+    await deleteAppointmentPermanently(req.userId!, req.params.id as string);
     res.status(204).send();
   } catch (e: any) {
     res.status(e.status || 500).json({ error: e.message });
