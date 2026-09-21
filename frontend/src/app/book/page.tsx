@@ -106,7 +106,7 @@ function BookFlow() {
           <div className="flex items-center gap-3 mt-4">
             <DatePicker
               selected={date}
-              onChange={(d) => setDate(d)}
+              onChange={(d: Date | null) => setDate(d)}
               minDate={new Date()}
               placeholderText="Select a date"
               dateFormat="MMMM d, yyyy"
