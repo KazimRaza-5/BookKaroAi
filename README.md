@@ -2,8 +2,8 @@
 
 A full-stack appointment booking application with a conversational AI assistant, built as a technical skills assessment. Users can book appointments either through a traditional form-based flow or by chatting naturally with an AI assistant that checks real availability and proposes bookings — which the user always confirms explicitly before anything is written to the database.
 
-**Live demo:** _[add link after deployment]_
-**GitHub repo:** _[add link once pushed]_
+**Live demo:** _[[add link after deployment](https://book-karo-ai.vercel.app/)]_
+**GitHub repo:** _[[add link once pushed](https://github.com/KazimRaza-5/BookKaroAi.git)]_
 **Video walkthrough:** _[optional]_
 
 ---
