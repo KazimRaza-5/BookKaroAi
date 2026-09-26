@@ -1,10 +1,10 @@
 # AI-Assisted Appointment Booking App
 
-A full-stack appointment booking application with a conversational AI assistant, built as a technical skills assessment. Users can book appointments either through a traditional form-based flow or by chatting naturally with an AI assistant that checks real availability and proposes bookings — which the user always confirms explicitly before anything is written to the database.
+A full-stack appointment booking application with a conversational AI assistant. Users can book appointments either through a traditional form-based flow or by chatting naturally with an AI assistant that checks real availability and proposes bookings — which the user always confirms explicitly before anything is written to the database.
 
-**Live demo:** _[https://book-karo-ai.vercel.app/]_
-**GitHub repo:** _[https://github.com/KazimRaza-5/BookKaroAi.git]_
-**Video walkthrough:** _[optional]_
+**Live demo:** https://book-karo-ai.vercel.app
+**GitHub repo:** https://github.com/KazimRaza-5/BookKaroAi
+
 
 ---
 
@@ -17,6 +17,7 @@ A full-stack appointment booking application with a conversational AI assistant,
 | Database | PostgreSQL, via Prisma ORM |
 | AI | Groq API (`openai/gpt-oss-120b`), OpenAI-compatible function/tool calling |
 | Auth | JWT (bcrypt-hashed passwords) |
+| Hosting | Vercel (frontend) · Railway (backend + PostgreSQL) |
 
 ---
 
@@ -25,6 +26,7 @@ A full-stack appointment booking application with a conversational AI assistant,
 ```
 ┌──────────────────┐   HTTP (send) + polling (receive)   ┌──────────────────────┐
 │   Next.js App      │ ◄───────────────────────────────► │   Express API           │
+│  (Vercel)             │                                   │  (Railway)                │
 │  - Booking UI (/book)│                                   │  - Auth (JWT)             │
 │  - AI chat UI (/chat) │                                  │  - Validation (zod)        │
 │  - Dashboard (/dashboard)│                                │  - Logging (morgan)          │
@@ -36,7 +38,7 @@ A full-stack appointment booking application with a conversational AI assistant,
                                               ▼                                             ▼
                                     ┌──────────────────┐                         ┌──────────────────┐
                                     │   PostgreSQL        │                         │   Groq API           │
-                                    │  (via Prisma)          │                       │  (tool calling)         │
+                                    │  (Railway, via Prisma) │                       │  (tool calling)         │
                                     └──────────────────┘                         └──────────────────┘
 ```
 
@@ -160,6 +162,44 @@ npm run dev             # runs on http://localhost:3000
 
 ---
 
+## Sharing / Reviewing This Project
+
+**To just see it working:** visit the live demo link at the top of this README — no setup, no clone, no environment variables needed.
+
+**To run it locally from the cloned repo:** `.env` files are intentionally excluded from version control (`.gitignore`) since they contain real secrets. `backend/.env.example` and `frontend/.env.example` are committed instead, listing exactly which variables are needed with placeholder values. Copy each to a real `.env` (or `.env.local` for the frontend) and fill in your own values — your own local Postgres connection (via the provided `docker-compose.yml`, no cost), any random string for `JWT_SECRET`, and your own free Groq API key from console.groq.com (no card required, ~2 minute signup). Nobody reviewing this needs, or should be given, the actual production secrets.
+
+---
+
+## Deployment
+
+The live instance runs on:
+- **Backend + PostgreSQL:** Railway. The Express API builds via `npm run build` (`tsc`) and runs via `npm run start` (`node dist/server.js`) — the local `dev` script (`ts-node-dev --transpile-only`) is dev-only and skips type-checking, so `npm run build` is always verified locally before deploying.
+- **Frontend:** Vercel, root directory set to `frontend/`, with `NEXT_PUBLIC_API_URL` pointing at the Railway backend's public domain.
+
+**Required environment variables on Railway (backend service):**
+```
+DATABASE_URL   — Postgres connection string (Railway auto-provides this when a Postgres service is linked in the same project)
+JWT_SECRET     — long random string
+GROQ_API_KEY   — from console.groq.com
+FRONTEND_URL   — the deployed Vercel origin, used to restrict CORS to only that origin in production
+```
+
+> **Gotcha worth knowing:** `FRONTEND_URL` and `NEXT_PUBLIC_API_URL` must **never** have a trailing slash. CORS origin matching requires an exact string match between the browser's `Origin` header and the server's `Access-Control-Allow-Origin` response — a single trailing `/` difference (e.g. `https://app.vercel.app/` vs `https://app.vercel.app`) causes every request to be silently blocked by the browser with a CORS error, even though the value looks correct at a glance.
+
+**Required environment variable on Vercel (frontend project):**
+```
+NEXT_PUBLIC_API_URL — the Railway backend's public domain, no trailing slash
+```
+
+**Production database setup** (one-time, via Railway CLI):
+```bash
+npx @railway/cli link
+npx @railway/cli run npx prisma@5.20.0 migrate deploy --schema=./prisma/schema.prisma
+npx @railway/cli run npx prisma@5.20.0 db seed --schema=./prisma/schema.prisma
+```
+
+---
+
 ## Key Design Decisions & Tradeoffs
 
 **Polling, not WebSockets.** The chat interaction is turn-based rather than needing a continuously open connection — simpler to reason about and debug for this scope. `POST /api/chat/message` returns immediately; the frontend polls for the result.
@@ -176,6 +216,10 @@ npm run dev             # runs on http://localhost:3000
 
 **Provider switch from Mistral to Groq.** Both are equally valid per the assessment's own wording ("any AI provider... Mistral is recommended"). The switch was a pragmatic response to Mistral's free tier proving too restrictive for iterative testing.
 
+**CORS restricted to the deployed frontend's exact origin in production**, rather than left open — a locally-convenient `cors()` with no restrictions is fine for development, but a deployed API should only accept browser requests from the one frontend origin that's actually meant to use it.
+
+**Server timezone pinned explicitly (`Asia/Karachi`).** All business-hours logic (`setHours(9, ...)` for opening time, day-boundary checks for "already booked today," etc.) depends on the server process's local timezone. Locally this matched the developer's machine by coincidence; once deployed to Railway (which defaults its containers to UTC), the exact same code silently shifted every time calculation by five hours — available slots appeared to start at 2 PM instead of 9 AM, and the AI's chat text (formatted server-side) disagreed with the confirm card (formatted in the browser's local time) despite referring to the identical timestamp. Fixed by setting `process.env.TZ` explicitly at the top of the server entrypoint and passing an explicit `timeZone` option to every date-formatting call, rather than relying on whatever timezone the underlying hosting environment happens to default to. Documented here as a genuine lesson from deploying to a different environment than local development, not a design choice made in advance.
+
 ---
 
 ## Known Limitations
@@ -184,7 +228,8 @@ npm run dev             # runs on http://localhost:3000
 - **No AI-driven cancellation yet.** The chat assistant can propose and book but not cancel — cancellation currently only exists on the Dashboard. Extending the same propose-then-confirm pattern to a `cancel_appointment` tool is the natural next step.
 - **No multi-tenancy.** All providers/services belong to a single implicit "business." Adding a `business_id` scoping column would be the natural next step for a real multi-tenant SaaS version.
 - **Client-side pagination on the dashboard.** Fine at this data scale; would move server-side for a much larger appointment history.
-- **CORS currently allows all origins**, for local development convenience — restricted to the deployed frontend's exact origin once deployed.
+- **Cold starts.** Both Railway's and Vercel's free tiers may briefly sleep/cold-start an inactive deployment; the very first request after a period of inactivity can be noticeably slower than subsequent ones.
+- **Single hardcoded timezone (`Asia/Karachi`).** Consistent with the app's existing single-business scope (no multi-tenancy) — a real multi-location product with providers in different timezones would need per-provider timezone support, which is out of scope here for the same reason multi-tenancy is.
 
 ---
 
