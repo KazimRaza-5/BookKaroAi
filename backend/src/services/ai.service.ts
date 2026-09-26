@@ -4,11 +4,11 @@ import { tools } from "../tools/bookingTools";
 import { getAvailableSlots, listServices, getMyExistingBookings } from "./booking.service";
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi", });
 }
 
 function formatFull(iso: string) {
-  return new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", hour12: true });
+  return new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", hour12: true, timeZone: "Asia/Karachi", });
 }
 
 function buildSystemPrompt(): string {
@@ -21,6 +21,7 @@ function buildSystemPrompt(): string {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: "Asia/Karachi",
   });
 
   return `You are a friendly, proactive appointment-booking assistant for a small clinic.
@@ -101,7 +102,7 @@ export async function handleChatMessage(sessionId: string, userId: string, userM
         } else if (toolCall.function.name === "get_available_slots") {
           const isoSlots = await getAvailableSlots(args.serviceId, args.date);
           slotCache[`${args.serviceId}|${args.date}`] = isoSlots;
-          const weekday = new Date(`${args.date}T00:00:00`).toLocaleDateString("en-US", { weekday: "long" });
+          const weekday = new Date(`${args.date}T00:00:00`).toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Karachi", });
           const myBookings = await getMyExistingBookings(userId, args.date);
           result = {
             date: args.date,
